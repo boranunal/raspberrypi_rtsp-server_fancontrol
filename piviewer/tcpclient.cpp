@@ -2,20 +2,52 @@
 
 TCPClient::TCPClient(QObject *parent) : QObject(parent) {
     connect(&socket, &QTcpSocket::readyRead, this, &TCPClient::onReadyRead);
+    connect(&socket, &QTcpSocket::connected, this, &TCPClient::onConnected);
+    connect(&m_updateTimer, &QTimer::timeout, this, &TCPClient::requestUpdate);
+    m_updateTimer.start(4000);
+    this->setPort(3000);
 }
 
-void TCPClient::connectToServer(const QString &host, quint16 port) {
-    socket.connectToHost(host, port);
+void TCPClient::connectToServer() {
+    if (m_host.isEmpty() || m_port == 0) {
+        qWarning() << "Host or port not set!";
+        return;
+    }
+    if (socket.state() != QTcpSocket::ConnectedState){
+        socket.connectToHost(m_host, m_port);
+    }
 }
 
 void TCPClient::requestUpdate() {
-    socket.abort();
-    socket.connectToHost("10.3.5.12", 3000); // Replace with your IP/port
-
-    if (socket.waitForConnected(1000)) {
-        socket.write("GET\n");
-        socket.flush();
+    if (socket.state() == QAbstractSocket::ConnectedState) {
+        QByteArray requestData = "GET";
+        socket.write(requestData);
     }
+    else {
+        connectToServer();
+    }
+}
+
+QString TCPClient::host() const {
+    return m_host;
+}
+
+void TCPClient::setHost(const QString &host) {
+    if (m_host == host)
+        return;
+    m_host = host;
+    emit hostChanged();
+}
+
+quint16 TCPClient::port() const {
+    return m_port;
+}
+
+void TCPClient::setPort(quint16 port) {
+    if (m_port == port)
+        return;
+    m_port = port;
+    emit portChanged();
 }
 
 void TCPClient::onReadyRead() {
@@ -38,6 +70,11 @@ void TCPClient::onReadyRead() {
             }
         }
     }
+}
+
+void TCPClient::onConnected() {
+    qDebug() << "Connected to server";
+    requestUpdate();
 }
 
 float TCPClient::temperature() const {

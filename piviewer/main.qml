@@ -4,9 +4,9 @@ import QtMultimedia 5.15
 import QtQuick.Controls 2.15
 import QtQuick.Layouts 1.15
 
-Window {
+ApplicationWindow {
     visible: true
-    width: 1280
+    width: 1280 + 40
     height: 720
     minimumWidth: 320
     minimumHeight: 180
@@ -33,9 +33,39 @@ Window {
         }
     }
 
+    ToolBar {
+        id: settingsBar
+        anchors.top: parent.top
+        anchors.left: parent.left
+        width: stream.width
+        contentHeight: 50
+
+        Row {
+            spacing: 12
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.left: parent.left
+            anchors.leftMargin: 12
+
+            Label { text: "Host:" }
+
+            TextField {
+                id: hostField
+                placeholderText: "Enter host IP"
+                width: 150
+                text: tcpClient.host
+                onTextChanged: tcpClient.host = text
+            }
+
+            Button {
+                text: "Connect"
+                onClicked: tcpClient.connectToServer()
+            }
+        }
+    }
     VideoOutput {
         id: stream
         anchors.left: parent.left
+        anchors.top: settingsBar.bottom
         height: parent.height
         width: height/480 * 640
         source: mediaPlayer
@@ -44,7 +74,7 @@ Window {
     MediaPlayer {
         id: mediaPlayer
         autoPlay: true
-        source: "rtsp://10.3.5.12:8554/stream"
+        source: "rtsp://"+tcpClient.host+":8554/stream"
         // Uses GStreamer qmlglsink internally automatically
     }
 

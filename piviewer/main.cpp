@@ -10,7 +10,6 @@ int main(int argc, char *argv[])
     QQmlApplicationEngine engine;
 
     TCPClient client;
-    client.connectToServer("10.3.5.12", 3000);
 
     engine.rootContext()->setContextProperty("tcpClient", &client);
     engine.load(QUrl(QStringLiteral("qrc:/main.qml")));

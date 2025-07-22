@@ -48,6 +48,7 @@ void* tcp_server_thread(void* arg) {
     struct sockaddr_in address;
     socklen_t addrlen = sizeof(address);
     char send_buffer[BUFFER_SIZE];
+    char recv_buf[BUFFER_SIZE];
     server = socket(AF_INET, SOCK_STREAM, 0);
     if (server < 0) {
         perror("Socket failed");
@@ -62,25 +63,46 @@ void* tcp_server_thread(void* arg) {
     address.sin_port = htons(PORT);
 
     if (bind(server, (struct sockaddr *)&address, sizeof(address)) < 0) {
-        perror("Bind failed");
+        perror("Bind failed\n");
         close(server);
         return NULL;
     }
 
     listen(server, 3);
     printf("Server listening on port %d\n", PORT);
-
+    ssize_t bytes;
     while (1) {
         new_socket = accept(server, (struct sockaddr *)&address, &addrlen);
         if (new_socket < 0) {
-            perror("Accept failed");
+            perror("Accept failed\n");
             continue;
         }
 
-        snprintf(send_buffer, sizeof(send_buffer),
-            "%.2f:%u\n",
-            current_temp, current_duty / 10000);
-        send(new_socket, send_buffer, strlen(send_buffer), 0);
+        while (1) {
+            bytes = recv(new_socket, recv_buf, sizeof(recv_buf) - 1, 0);
+            if (bytes > 0) {
+                // Null-terminate and print the request
+                recv_buf[bytes] = '\0';
+                printf("Received request: %s\n", recv_buf);
+
+                // Prepare and send the response
+                snprintf(send_buffer, sizeof(send_buffer),
+                    "%.2f:%u\n",
+                    current_temp, current_duty / 10000);
+                send(new_socket, send_buffer, strlen(send_buffer), 0);
+
+
+            } else if (bytes == 0) {
+                // Client closed connection
+                printf("Client disconnected\n");
+                break;
+            } else {
+                // Error on recv
+                perror("recv() failed\n");
+                break;
+            }
+        }
+
         close(new_socket);
     }
 
