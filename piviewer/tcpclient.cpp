@@ -23,9 +23,6 @@ void TCPClient::requestUpdate() {
         QByteArray requestData = "GET";
         socket.write(requestData);
     }
-    else {
-        connectToServer();
-    }
 }
 
 QString TCPClient::host() const {
