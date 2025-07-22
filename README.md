@@ -62,9 +62,6 @@ make
 - Start the RTSP server and fan controller on the Raspberry Pi.
 - Launch the Qt app (change the source code with your specific RTSP URL) on your desktop.
 
-## Issues
-
-- There is no user interface for IP address and port configuration in Qt app. You need to modify the source code to set the RTSP URL and socket server address.
 
 ## Acknowledgements
 
